@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Do You Love Me?</title>
+  <style>
+    body {
+      background-color: pink;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) 
+               env(safe-area-inset-bottom) env(safe-area-inset-left);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    h1 {
+      font-size: clamp(1.5em, 5vw, 2.5em);
+      color: #d63384;
+      margin: 0.5em;
+      padding: 0 1em;
+      word-wrap: break-word;
+    }
+
+    .submsg {
+      font-size: clamp(0.8em, 3vw, 1em);
+      color: black;
+      margin-top: 0.3em;
+      font-style: italic;
+    }
+
+    .gif-slot {
+      margin-bottom: 5vh;
+      max-width: 90vw;
+    }
+
+    .gif-slot img {
+      max-width: 60vw;
+      max-height: 30vh;
+      border-radius: 10px;
+      transition: opacity 0.5s ease;
+    }
+
+    .buttons {
+      margin-top: 2vh;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1em;
+    }
+
+    button {
+      background-color: #d63384;
+      border: none;
+      color: white;
+      padding: 1em 2em;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: clamp(1em, 4vw, 1.2em);
+      transition: 0.3s;
+      min-width: 100px;
+    }
+
+    button:hover {
+      background-color: #a61c61;
+    }
+
+    /* Small flower background */
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: radial-gradient(darkpink 1px, transparent 1px),
+                        radial-gradient(#ff4d88 1px, transparent 1px);
+      background-size: 50px 50px;
+      background-position: 0 0, 25px 25px;
+      opacity: 0.2;
+      z-index: -1;
+    }
+  </style>
+</head>
+<body>
+  <!-- GIF slot -->
+  <div class="gif-slot">
+    <img id="mainGif" src="gif1.gif" alt="Cute GIF">
+  </div>
+
+  <h1 id="question">Do you Love me ?</h1>
+  <p id="submsg" class="submsg"></p>
+
+  <div class="buttons" id="buttons">
+    <button id="yesBtn">Yes 💖</button>
+    <button id="noBtn">No </button>
+  </div>
+
+  <script>
+    let noClickCount = 0;
+    const question = document.getElementById("question");
+    const submsg = document.getElementById("submsg");
+    const yesBtn = document.getElementById("yesBtn");
+    const noBtn = document.getElementById("noBtn");
+    const buttonsDiv = document.getElementById("buttons");
+    const gif = document.getElementById("mainGif");
+
+    // Your GIFs are in the same folder as index.html
+    const gifPaths = [
+      "gif1.gif", // start
+      "gif2.gif", // after 1st No
+      "gif3.gif", // after 2nd No
+      "gif4.gif", // after 3rd No
+      "gif5.gif"  // after Yes
+    ];
+
+    yesBtn.addEventListener("click", () => {
+      question.textContent = "Hehehehe, I knew it! Love you a lot ❤️";
+      submsg.textContent = "";
+      gif.src = gifPaths[4];
+      buttonsDiv.style.display = "none"; // remove buttons
+    });
+
+    noBtn.addEventListener("click", () => {
+      noClickCount++;
+      if (noClickCount === 1) {
+        question.textContent = "Please think again!";
+        submsg.textContent = "Arre yaar, ek chance aur do 😅";
+        gif.src = gifPaths[1];
+      } else if (noClickCount === 2) {
+        question.textContent = "Ek aur baar sochh lo...";
+        submsg.textContent = "Sach mein dil tod dogi kya? 💔";
+        gif.src = gifPaths[2];
+      } else if (noClickCount === 3) {
+        question.textContent = "Maan jao na! Kitna bhav khaogi 😘";
+        submsg.textContent = "Bahut galt baat hai yaar 😜";
+        gif.src = gifPaths[3];
+        noBtn.style.display = "none"; // hide "No"
+      }
+    });
+  </script>
+</body>
+</html>
