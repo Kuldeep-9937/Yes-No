@@ -18,6 +18,7 @@
       justify-content: center;
       align-items: center;
       overflow: hidden;
+      position: relative;
     }
 
     h1 {
@@ -53,6 +54,7 @@
       flex-wrap: wrap;
       justify-content: center;
       gap: 1em;
+      position: relative;
     }
 
     button {
@@ -71,20 +73,23 @@
       background-color: #a61c61;
     }
 
-    /* Small flower background */
-    body::before {
-      content: "";
+    #pseudoNoBtn {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-image: radial-gradient(darkpink 1px, transparent 1px),
-                        radial-gradient(#ff4d88 1px, transparent 1px);
-      background-size: 50px 50px;
-      background-position: 0 0, 25px 25px;
-      opacity: 0.2;
-      z-index: -1;
+      z-index: 100;
+      background-color: #d63384;
+      border: none;
+      color: white;
+      padding: 1em 2em;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: clamp(1em, 4vw, 1.2em);
+      min-width: 100px;
+      box-shadow: 0 0 8px 2px rgba(214,51,132,0.12);
+      transition: left .2s, top .2s, background-color 0.3s;
+      user-select: none;
+    }
+    #pseudoNoBtn:hover {
+      background-color: #a61c61;
     }
   </style>
 </head>
@@ -104,6 +109,7 @@
 
   <script>
     let noClickCount = 0;
+    let pseudoNoClickCount = 0;
     const question = document.getElementById("question");
     const submsg = document.getElementById("submsg");
     const yesBtn = document.getElementById("yesBtn");
@@ -111,7 +117,6 @@
     const buttonsDiv = document.getElementById("buttons");
     const gif = document.getElementById("mainGif");
 
-    // Your GIFs are in the same folder as index.html
     const gifPaths = [
       "gif1.gif", // start
       "gif2.gif", // after 1st No
@@ -121,10 +126,7 @@
     ];
 
     yesBtn.addEventListener("click", () => {
-      question.textContent = "Hehehehe, I knew it! Love you a lot ❤️";
-      submsg.textContent = "";
-      gif.src = gifPaths[4];
-      buttonsDiv.style.display = "none"; // remove buttons
+      showYesResult();
     });
 
     noBtn.addEventListener("click", () => {
@@ -141,9 +143,82 @@
         question.textContent = "Maan jao na! Kitna bhav khaogi 😘";
         submsg.textContent = "Bahut galt baat hai yaar 😜";
         gif.src = gifPaths[3];
-        noBtn.style.display = "none"; // hide "No"
+        // Get position of original No button before hiding
+        const noRect = noBtn.getBoundingClientRect();
+        const buttonsRect = buttonsDiv.getBoundingClientRect();
+        const left = noRect.left - buttonsRect.left;
+        const top = noRect.top - buttonsRect.top;
+        noBtn.style.display = "none";
+        createPseudoNoBtn(left, top);
       }
     });
+
+    function showYesResult() {
+      question.textContent = "Hehehehe, I knew it! Love you a lot ❤️";
+      submsg.textContent = "";
+      gif.src = gifPaths[4];
+      buttonsDiv.style.display = "none";
+      const oldPseudo = document.getElementById("pseudoNoBtn");
+      if (oldPseudo) oldPseudo.remove();
+    }
+
+    function createPseudoNoBtn(startLeft, startTop) {
+      pseudoNoClickCount = 0;
+      const pseudoNoBtn = document.createElement("button");
+      pseudoNoBtn.id = "pseudoNoBtn";
+      pseudoNoBtn.textContent = "No";
+      // Place in buttonsDiv, at the same place as original No
+      buttonsDiv.appendChild(pseudoNoBtn);
+      pseudoNoBtn.style.left = `${startLeft}px`;
+      pseudoNoBtn.style.top = `${startTop}px`;
+
+      // For correct positioning, parent must be relative
+      buttonsDiv.style.position = "relative";
+      pseudoNoBtn.style.position = "absolute";
+      pseudoNoBtn.style.transform = "";
+
+      function getRandomPosition() {
+        // Move within the body
+        const padding = 40;
+        const winW = window.innerWidth - padding;
+        const winH = window.innerHeight - padding;
+        const x = Math.random() * (winW - padding) + padding/2;
+        const y = Math.random() * (winH - padding) + padding/2;
+        return { left: x, top: y };
+      }
+
+      function moveOverYesBtn() {
+        // Move over Yes button, relative to page
+        const yesRect = yesBtn.getBoundingClientRect();
+        pseudoNoBtn.style.position = "fixed";
+        pseudoNoBtn.style.left = (yesRect.left + yesRect.width/2) + "px";
+        pseudoNoBtn.style.top = (yesRect.top + yesRect.height/2) + "px";
+        pseudoNoBtn.style.transform = "translate(-50%, -50%)";
+      }
+
+      pseudoNoBtn.addEventListener("click", () => {
+        pseudoNoClickCount++;
+        if (pseudoNoClickCount <= 5) {
+          // Move to random position on page
+          const pos = getRandomPosition();
+          pseudoNoBtn.style.position = "fixed";
+          pseudoNoBtn.style.left = `${pos.left}px`;
+          pseudoNoBtn.style.top = `${pos.top}px`;
+          pseudoNoBtn.style.transform = "";
+        } else if (pseudoNoClickCount === 6) {
+          moveOverYesBtn();
+        } else if (pseudoNoClickCount === 7) {
+          pseudoNoBtn.style.display = "none";
+          setTimeout(() => {
+            showYesResult();
+          }, 2000);
+        }
+      });
+
+      window.addEventListener('resize', () => {
+        if (pseudoNoClickCount === 6) moveOverYesBtn();
+      });
+    }
   </script>
 </body>
 </html>
