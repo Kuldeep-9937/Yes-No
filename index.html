@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Do You Love Me?</title>
   <style>
+    html, body {
+      height: 100%;
+      box-sizing: border-box;
+    }
     body {
       background-color: pink;
       font-family: Arial, sans-serif;
@@ -19,6 +23,8 @@
       align-items: center;
       overflow: hidden;
       position: relative;
+      box-sizing: border-box;
+      touch-action: manipulation;
     }
 
     h1 {
@@ -67,9 +73,11 @@
       font-size: clamp(1em, 4vw, 1.2em);
       transition: 0.3s;
       min-width: 100px;
+      min-height: 48px;
+      /* Ensures tap targets are big enough on mobile */
     }
 
-    button:hover {
+    button:hover, button:active {
       background-color: #a61c61;
     }
 
@@ -84,11 +92,14 @@
       cursor: pointer;
       font-size: clamp(1em, 4vw, 1.2em);
       min-width: 100px;
+      min-height: 48px;
       box-shadow: 0 0 8px 2px rgba(214,51,132,0.12);
       transition: left .2s, top .2s, background-color 0.3s;
       user-select: none;
+      /* Prevent accidental selection */
+      touch-action: manipulation;
     }
-    #pseudoNoBtn:hover {
+    #pseudoNoBtn:hover, #pseudoNoBtn:active {
       background-color: #a61c61;
     }
   </style>
@@ -162,30 +173,56 @@
       if (oldPseudo) oldPseudo.remove();
     }
 
+    // Helper: get safe area insets in px
+    function getSafeAreaInsetPx(side) {
+      const temp = document.createElement('div');
+      temp.style.position = 'fixed';
+      temp.style[side] = '0';
+      temp.style.width = side === 'left' || side === 'right' ? 'env(safe-area-inset-' + side + ')' : '100vw';
+      temp.style.height = side === 'top' || side === 'bottom' ? 'env(safe-area-inset-' + side + ')' : '100vh';
+      temp.style.visibility = 'hidden';
+      document.body.appendChild(temp);
+      const size = side === 'left' || side === 'right'
+        ? temp.offsetWidth
+        : temp.offsetHeight;
+      document.body.removeChild(temp);
+      return size || 0;
+    }
+
+    function getRandomPosition(btnWidth, btnHeight) {
+      // Get safe area insets
+      const leftInset = getSafeAreaInsetPx('left');
+      const rightInset = getSafeAreaInsetPx('right');
+      const topInset = getSafeAreaInsetPx('top');
+      const bottomInset = getSafeAreaInsetPx('bottom');
+      // Button padding from edge
+      const padding = 10;
+      const winW = window.innerWidth;
+      const winH = window.innerHeight;
+      // Calculate available area
+      const minX = leftInset + padding;
+      const maxX = winW - rightInset - btnWidth - padding;
+      const minY = topInset + padding;
+      const maxY = winH - bottomInset - btnHeight - padding;
+      const x = Math.random() * (maxX - minX) + minX;
+      const y = Math.random() * (maxY - minY) + minY;
+      return { left: x, top: y };
+    }
+
     function createPseudoNoBtn(startLeft, startTop) {
       pseudoNoClickCount = 0;
       const pseudoNoBtn = document.createElement("button");
       pseudoNoBtn.id = "pseudoNoBtn";
       pseudoNoBtn.textContent = "No";
-      // Place in buttonsDiv, at the same place as original No
       buttonsDiv.appendChild(pseudoNoBtn);
+      // Match styling
       pseudoNoBtn.style.left = `${startLeft}px`;
       pseudoNoBtn.style.top = `${startTop}px`;
-
-      // For correct positioning, parent must be relative
-      buttonsDiv.style.position = "relative";
       pseudoNoBtn.style.position = "absolute";
       pseudoNoBtn.style.transform = "";
 
-      function getRandomPosition() {
-        // Move within the body
-        const padding = 40;
-        const winW = window.innerWidth - padding;
-        const winH = window.innerHeight - padding;
-        const x = Math.random() * (winW - padding) + padding/2;
-        const y = Math.random() * (winH - padding) + padding/2;
-        return { left: x, top: y };
-      }
+      // For correct positioning, parent must be relative
+      buttonsDiv.style.position = "relative";
 
       function moveOverYesBtn() {
         // Move over Yes button, relative to page
@@ -196,11 +233,20 @@
         pseudoNoBtn.style.transform = "translate(-50%, -50%)";
       }
 
-      pseudoNoBtn.addEventListener("click", () => {
+      // Responsive: get size after render
+      function getBtnSize() {
+        return {
+          width: pseudoNoBtn.offsetWidth,
+          height: pseudoNoBtn.offsetHeight
+        };
+      }
+
+      pseudoNoBtn.addEventListener("click", function handlePseudoClick() {
         pseudoNoClickCount++;
         if (pseudoNoClickCount <= 5) {
-          // Move to random position on page
-          const pos = getRandomPosition();
+          // Move to random position on screen, not under notch or curve
+          const {width, height} = getBtnSize();
+          const pos = getRandomPosition(width, height);
           pseudoNoBtn.style.position = "fixed";
           pseudoNoBtn.style.left = `${pos.left}px`;
           pseudoNoBtn.style.top = `${pos.top}px`;
@@ -215,9 +261,10 @@
         }
       });
 
+      // On resize (orientation change, etc), keep over Yes if needed
       window.addEventListener('resize', () => {
         if (pseudoNoClickCount === 6) moveOverYesBtn();
-      });
+      }, { passive: true });
     }
   </script>
 </body>
